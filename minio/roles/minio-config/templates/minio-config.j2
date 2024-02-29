@@ -1,0 +1,28 @@
+# MINIO Main config Options
+MINIO_OPTS="--address :9000 --console-address :9001"
+MINIO_ROOT_USER={{ minio_user }}
+MINIO_ROOT_PASSWORD={{ minio_password }}
+MINIO_BROWSER_REDIRECT_URL={{ minio_url }}
+MINIO_SITE_NAME={{ minio_site_name }}
+MINIO_SITE_REGION={{ minio_site_region }}
+MINIO_LOG_LEVEL=debug
+
+# MINIO OpenID Config Options
+#MINIO_IDENTITY_OPENID_DISPLAY_NAME="{{ openid_display_name }}"
+#MINIO_IDENTITY_OPENID_CONFIG_URL="{{ openid_config_url }}"
+#MINIO_IDENTITY_OPENID_CLIENT_ID="{{ openid_client_id }}"
+#MINIO_IDENTITY_OPENID_CLIENT_SECRET="{{ openid_client_secret }}"
+#MINIO_IDENTITY_OPENID_CLAIM_NAME="{{ openid_claim_name }}"
+#MINIO_IDENTITY_OPENID_SCOPES="{{ openid_scopes }}"
+#MINIO_IDENTITY_OPENID_REDIRECT_URI="{{ openid_redirect_url }}"
+
+{% if groups['minio'] | length > 1 %}
+{% set sample_host = groups['minio'] | first %}
+{% set parts = sample_host.split('.') %}
+{% set prefix = parts[0].split('-')[0] %}
+{% set domain = '.' ~ parts[1:] | join('.') %}
+{% set node_count = groups['minio'] | length %}
+MINIO_VOLUMES="{% for i in range(0, node_count) %}http://{{ prefix }}-{{ i }}{{ domain }}:9000/data{% if not loop.last %} {% endif %}{% endfor %}"
+{% else %}
+  MINIO_VOLUMES="{{ minio_data_dir }}"
+{% endif %}

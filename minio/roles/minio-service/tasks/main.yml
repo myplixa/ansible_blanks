@@ -1,0 +1,42 @@
+---
+
+- name: Set Up MinIO Systemd Service
+  template:
+    src: "minio.service.j2"
+    dest: "/etc/systemd/system/minio.service"
+
+- name: Reload systemd daemon
+  ansible.builtin.systemd:
+    daemon_reload: yes
+
+- name: Create Mount Point for /data
+  file:
+    path: /data
+    state: directory
+    mode: '0777'
+
+- name: Format Disk vdb (Caution This will erase data on the disk)
+  filesystem:
+    fstype: xfs
+    dev: /dev/vdb
+  when: ansible_mounts | json_query('[*].device') | select('match', '^/dev/vdb$') | list | length == 0
+
+- name: Temporarily Mount Disk vdb to /data
+  mount:
+    path: /data
+    src: /dev/vdb
+    fstype: xfs
+    state: mounted
+
+- name: Add Entry for vdb Disk to /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: '/dev/vdb /data xfs defaults 0 2'
+    state: present
+
+- name: Add all inventory hosts to /etc/hosts
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[item].ansible_ssh_host }} {{ item }}"
+    state: present
+  loop: "{{ groups['minio'] }}"

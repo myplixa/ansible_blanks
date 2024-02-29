@@ -1,0 +1,9 @@
+---
+- name: Minio Playbook
+  hosts: minio
+  become: yes
+
+  roles:
+    - { role: roles/minio-install, tags: ['all'] }
+    - { role: roles/minio-service, tags: ['all'] }
+    - { role: roles/minio-config, tags: ['all'] }

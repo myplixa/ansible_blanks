@@ -1,0 +1,49 @@
+---
+
+- name: Ensure MinIO Group Exists
+  group:
+    name: "{{ minio_user }}"
+    state: present
+
+- name: Ensure MinIO User Exists
+  user:
+    name: "{{ minio_user }}"
+    group: "{{ minio_user }}"
+    system: yes
+    shell: /sbin/nologin
+
+- name: Ensure MinIO Data Directory Exists
+  file:
+    path: "{{ minio_data_dir }}"
+    state: directory
+    owner: "{{ minio_user }}"
+    group: "{{ minio_user }}"
+    mode: '0777'
+
+- name: Configure MinIO Environment
+  template:
+    src: "minio-config.j2"
+    dest: "/etc/default/minio"
+
+- name: Enable and Start MinIO Service on First Node
+  systemd:
+    name: minio
+    enabled: yes
+    state: started
+  when: inventory_hostname == groups['minio'][0]
+
+- name: Wait for MinIO Service to be Active on First Node
+  ansible.builtin.wait_for:
+    host: "{{ hostvars[groups['minio'][0]].ansible_ssh_host }}"
+    port: 9000
+    state: started
+    delay: 5
+    timeout: 300
+  when: inventory_hostname == groups['minio'][0]
+
+- name: Enable and Start MinIO Service on Remaining Nodes
+  systemd:
+    name: minio
+    enabled: yes
+    state: started
+  when: inventory_hostname != groups['minio'][0]

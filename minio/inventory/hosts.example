@@ -1,0 +1,10 @@
+[minio]
+minio-0.example.local minio_mode=single-drive ansible_ssh_host=192.168.0.10
+minio-1.example.local minio_mode=single-drive ansible_ssh_host=192.168.0.11
+minio-2.example.local minio_mode=single-drive ansible_ssh_host=192.168.0.12
+
+[all:vars]
+ansible_ssh_private_key_file="../ssh/id_rsa_vm"
+ansible_connection='ssh'
+ansible_user="user"
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'

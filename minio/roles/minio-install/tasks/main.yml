@@ -1,0 +1,20 @@
+---
+- name: Install application
+  apt:
+    name:
+      - xfsprogs
+      - net-tools
+    update_cache: true
+    state: present
+
+- name: Check if MinIO binary exists
+  stat:
+    path: /usr/local/bin/minio
+  register: minio_binary
+
+- name: Download MinIO binary
+  get_url:
+    url: "{{ minio_binary_url }}"
+    dest: "/usr/local/bin/minio"
+    mode: '0755'
+  when: not minio_binary.stat.exists

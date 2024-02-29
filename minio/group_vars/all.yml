@@ -1,0 +1,16 @@
+minio_binary_url:     'https://dl.min.io/server/minio/release/linux-amd64/minio'
+
+minio_data_dir:       '/data'
+minio_url:            'https://minio.example.com'
+minio_site_name:      'minio'
+minio_site_region:    'ru-spb'
+minio_user:           'miniouser'
+minio_password:       'P@ssw0rd'
+
+openid_display_name:  'SSO'
+openid_config_url:    'https://sso.example.com/auth/realms/example/.well-known/openid-configuration'
+openid_client_id:     'minio-s3-corporate'
+openid_claim_name:    'minio_s3_roles'
+openid_client_secret: 'IamyvHbxFepzs3LPKn4Gn6GzAuno'
+openid_scopes:        'openid,profile,email'
+openid_redirect_url:  'https://minio.example.com/oauth_callback'
