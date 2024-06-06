@@ -1,0 +1,57 @@
+---
+
+- name: Add Docker's official GPG key
+  apt_key:
+    url: https://download.docker.com/linux/debian/gpg
+    state: present
+
+- name: Add the repository to Apt sources
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/{{ ansible_system | lower }}/{{ ansible_distribution | lower }} {{ ansible_distribution_release }} stable
+    filename: docker
+    state: present
+
+- name: Install docker
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+
+- name: Add current user to docker group
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+
+- name: Add daemon config
+  template:
+    src: daemon.j2
+    dest: /etc/docker/daemon.json
+    mode: preserve
+
+- name: Create directory for docker compose files
+  file:
+    path: /opt/docker
+    state: directory
+
+- name: Restart Docker Service
+  service:
+    name: docker
+    state: restarted
+    enabled: true
+
+- name: Check that the docker.pid exists
+  stat:
+    path: /run/docker.pid
+  register: stat_result
+  ignore_errors: true
+
+- name: Result of check docker.pid
+  debug:
+    msg: "Docker started"
+  when: stat_result.stat.exists

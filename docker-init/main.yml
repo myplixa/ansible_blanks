@@ -1,0 +1,10 @@
+---
+
+- name: Install Docker-ce
+  hosts: docker
+  become: true
+  gather_facts: true
+
+  roles:
+    - { role: roles/pre-config }
+    - { role: roles/docker }
