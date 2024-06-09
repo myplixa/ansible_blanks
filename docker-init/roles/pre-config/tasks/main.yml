@@ -20,5 +20,6 @@
       - net-tools
       - vim
       - curl
+      - gnupg
     state: present
     update_cache: true
