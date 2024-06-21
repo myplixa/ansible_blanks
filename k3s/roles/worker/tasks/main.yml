@@ -1,0 +1,9 @@
+---
+
+- name: Install k3s worker node with specific version and configurations
+  shell: 
+    cmd: |
+      curl -sfL https://get.k3s.io | K3S_TOKEN={{ k3s_node_token }} INSTALL_K3S_VERSION={{ k3s_version }} sh -s - agent \
+      --server https://{{ hostvars[groups['master'][0]]['ansible_host'] }}:6443 \
+      --node-label 'node_type=worker' \
+      --kube-proxy-arg metrics-bind-address=0.0.0.0

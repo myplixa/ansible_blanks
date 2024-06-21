@@ -1,0 +1,6 @@
+---
+
+- name: Install Calico
+  shell:
+    cmd: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/{{ calico_version }}/manifests/calico.yaml
+  when: inventory_hostname == groups['master'][0]

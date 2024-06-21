@@ -1,0 +1,14 @@
+---
+
+- name: Deploy MetalLB
+  hosts: k3s_cluster
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all
+
+  tasks:
+    - name: Deploy MetalLB
+      import_role:
+        name: roles/deploy/metallb
+      tags: "metalb"
+      when: "'master' in group_names"

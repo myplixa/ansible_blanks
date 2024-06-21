@@ -1,0 +1,19 @@
+[master]
+%{for key, value in vm_master ~}
+${key}.${vm_domain} ansible_host=${value}
+%{endfor ~}
+
+[worker]
+%{for key, value in vm_worker ~}
+${key}.${vm_domain} ansible_host=${value}
+%{endfor ~}
+
+[k3s_cluster:children]
+master
+worker
+
+[all:vars]
+ansible_user="${vm_user}"
+ansible_ssh_private_key_file="../.ssh/id_rsa"
+ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+ansible_python_interpreter=/usr/bin/python3

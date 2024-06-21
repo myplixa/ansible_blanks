@@ -1,0 +1,33 @@
+---
+
+- name: Install K3S HA service
+  hosts: k3s_cluster
+  become: true
+  gather_facts: no
+  vars_files:
+    - ../group_vars/all
+
+  tasks:
+    - name: Master Nodes
+      tags: "k3s"
+      import_role:
+        name: roles/master
+      when: "'master' in group_names"
+
+    - name: Worker Nodes
+      tags: "k3s"
+      import_role:
+        name: roles/worker
+      when: "'worker' in group_names"
+
+  post_tasks:
+  - name: Download kubeconfig file
+    ansible.builtin.fetch:
+      src: "/etc/rancher/k3s/k3s.yaml"
+      dest: "../../.kube/config"
+      flat: true
+    when: inventory_hostname == groups['master'][0]
+
+  - name: Calico
+    include_role:
+      name: ./roles/deploy/calico

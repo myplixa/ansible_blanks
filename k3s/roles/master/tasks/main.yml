@@ -1,0 +1,80 @@
+---
+
+- name: Install main master node
+  shell:
+    cmd: |
+      curl -sfL https://get.k3s.io | INSTALL_K3S_VERSION={{ k3s_version }} sh -s - server \
+      --cluster-init \
+      --disable traefik \
+      --disable servicelb \
+      --tls-san={{ hostvars[groups['master'][0]]['ansible_host'] }} \
+      --node-label 'node_type=master' \
+      --flannel-backend=none \
+      --disable-network-policy \
+      --cluster-cidr="{{ cluster_network }}" \
+      --service-cidr="{{ service_network }}" \
+      --cluster-dns="{{ cluster_dns_ip }}" \
+      --cluster-domain="{{ cluster_domain_name }}" \
+      --write-kubeconfig-mode 644 \
+      --kube-controller-manager-arg bind-address=0.0.0.0 \
+      --kube-proxy-arg metrics-bind-address=0.0.0.0 \
+      --kube-scheduler-arg bind-address=0.0.0.0 \
+      --etcd-expose-metrics true \
+      --kube-apiserver-arg default-not-ready-toleration-seconds=30 \
+      --kube-apiserver-arg default-unreachable-toleration-seconds=30 \
+      --kube-controller-arg node-monitor-period=20s \
+      --kube-controller-arg node-monitor-grace-period=20s \
+      --kubelet-arg containerd=/run/k3s/containerd/containerd.sock \
+      --kubelet-arg node-status-update-frequency=5s
+  when: inventory_hostname == groups['master'][0]
+
+- name: Get k3s node token
+  register: node_token
+  changed_when: false
+  delegate_facts: true
+  shell: cat /var/lib/rancher/k3s/server/node-token
+  when: inventory_hostname == groups['master'][0]
+
+- name: Save node token and kubeconfig to local variables
+  run_once: true
+  set_fact:
+    k3s_node_token: "{{ node_token.stdout }}"
+  when: inventory_hostname == groups['master'][0]
+
+- name: Check status start first master node
+  shell: kubectl get --raw='/healthz'
+  register: result
+  when: inventory_hostname == groups['master'][0]
+
+- name: Print Kubernetes health status
+  debug:
+    msg: "Kubernetes health status: {{ result.stdout }}"
+  when: inventory_hostname == groups['master'][0] and result.stdout == 'ok'
+
+- name: Installing the remaining master nodes
+  shell:
+    cmd: |
+      curl -sfL https://get.k3s.io | K3S_TOKEN={{ k3s_node_token }} INSTALL_K3S_VERSION={{ k3s_version }} sh -s - server \
+      --server https://{{ hostvars[groups['master'][0]]['ansible_host'] }}:6443 \
+      --disable traefik \
+      --disable servicelb \
+      --tls-san={{ hostvars[inventory_hostname]['ansible_host'] }} \
+      --node-label 'node_type=master' \
+      --flannel-backend=none \
+      --disable-network-policy \
+      --cluster-cidr="{{ cluster_network }}" \
+      --service-cidr="{{ service_network }}" \
+      --cluster-dns="{{ cluster_dns_ip }}" \
+      --cluster-domain="{{ cluster_domain_name }}" \
+      --write-kubeconfig-mode 644 \
+      --kube-controller-manager-arg bind-address=0.0.0.0 \
+      --kube-proxy-arg metrics-bind-address=0.0.0.0 \
+      --kube-scheduler-arg bind-address=0.0.0.0 \
+      --etcd-expose-metrics true \
+      --kube-apiserver-arg default-not-ready-toleration-seconds=30 \
+      --kube-apiserver-arg default-unreachable-toleration-seconds=30 \
+      --kube-controller-arg node-monitor-period=20s \
+      --kube-controller-arg node-monitor-grace-period=20s \
+      --kubelet-arg containerd=/run/k3s/containerd/containerd.sock \
+      --kubelet-arg node-status-update-frequency=5s
+  when: inventory_hostname in groups['master'][1:]
